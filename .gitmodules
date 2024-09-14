@@ -1,0 +1,3 @@
+[submodule "src/fensterb"]
+	path = src/fensterb
+	url = https://github.com/CardealRusso/fensterb/

@@ -1,0 +1,49 @@
+name: Compile Fenstim Examples
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Set up Nim
+      uses: jiro4989/setup-nim-action@v1
+      with:
+        nim-version: 'stable'
+
+    - name: Install dependencies on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get install -y libasound2-dev
+      shell: bash
+
+    - name: Create build directory
+      run: mkdir build
+      shell: bash
+
+    - name: Compile Examples
+      run: |
+        for file in examples/*.nim; do
+          filename=$(basename "$file" .nim)
+          echo "Compiling $filename"
+          nim c -f -d:danger -d:lto -d:strip --mm:arc --passC:"-march=native" -o:"build/${filename}_${{ runner.os }}" "$file"
+        done
+      shell: bash
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: fenstim-examples-${{ runner.os }}
+        path: build/
